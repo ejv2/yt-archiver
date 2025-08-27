@@ -188,6 +188,10 @@ func checkDownloadDirectory(dir string) error {
 	if err != nil {
 		return err
 	}
+	_, err = fmt.Fprintln(f, "This file was created as a test by ytarchiver. Feel free to delete it.")
+	if err != nil {
+		return err
+	}
 
 	return f.Close()
 }

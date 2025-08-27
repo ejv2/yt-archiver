@@ -44,7 +44,7 @@ func NewSelectorRegex(match int, regex string) (SelectorRegex, error) {
 	return SelectorRegex{match, rp}, nil
 }
 
-func (s SelectorRegex) Should(vid *youtube.Video) bool {
+func (s SelectorRegex) Should(vid *youtube.PlaylistItem, _ *youtube.Service) bool {
 	toMatch := ""
 	switch s.Match {
 	case SelectorRegexTitle:

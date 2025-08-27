@@ -1,0 +1,10 @@
+{
+	"root": "/var/media/",
+	"api_key": "YOUR_KEY_HERE",
+	"max_parallel": 4,
+	"downloader": "/usr/bin/youtube-dl",
+	"channels": [
+		{"handle": "RickAstleyYT"}
+	],
+	"interval": "1h"
+}

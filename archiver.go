@@ -229,6 +229,10 @@ func NewArchiverWithContext(ctx context.Context, cfg Config) (*Archiver, error) 
 		return nil, err
 	}
 
+	if err = crawlRoot(ar); err != nil {
+		return nil, err
+	}
+
 	return ar, nil
 }
 

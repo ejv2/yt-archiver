@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ejv2/prepper/logging"
 	ytarchiver "github.com/ejv2/yt-archiver"
 )
 
@@ -18,8 +17,6 @@ const (
 	VersionPatch = 0
 	VersionRev   = 1
 )
-
-var dmesg = logging.NewDmesg()
 
 func initialize() (Config, *ytarchiver.Archiver, error) {
 	cfg, err := NewConfig()
@@ -49,7 +46,6 @@ func doArchive(t time.Time, ar *ytarchiver.Archiver, cfg Config) {
 }
 
 func main() {
-	log.SetOutput(dmesg.LogOutput())
 	log.Printf("Starting ytarchiver v%d.%d.%d-%d...", VersionMajor, VersionMinor, VersionPatch, VersionRev)
 
 	cfg, ar, err := initialize()

@@ -1,0 +1,7 @@
+yt-archiver - a little interface for archiving a set of YouTube channels
+========================================================================
+
+yt-archiver is a simple YouTube archiving system with a frontend. The main
+archiving system is contained within a package which can be imported for use in
+other programs. The web frontend and service are contained within the cmd/
+directory.

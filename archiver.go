@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
-	"time"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
@@ -19,10 +19,11 @@ import (
 
 // Archiver process errors.
 var (
-	ErrAPIKey     = errors.New("ytarchiver: api key")
-	ErrAPIConnect = errors.New("ytarchiver: api")
-	ErrDownloader = errors.New("ytarchiver: downloader")
-	ErrCacheBuild = errors.New("ytarchiver: build channel cache")
+	ErrAPIKey      = errors.New("ytarchiver: api key")
+	ErrAPIConnect  = errors.New("ytarchiver: api")
+	ErrDownloader  = errors.New("ytarchiver: downloader")
+	ErrDownloadDir = errors.New("ytarchiver: bad download directory")
+	ErrCacheBuild  = errors.New("ytarchiver: build channel cache")
 
 	ErrCacheMiss = errors.New("ytarchiver archive: channel not in cache")
 
@@ -94,15 +95,18 @@ type archiveMultiplexer struct {
 	errChan  chan []error
 }
 
-func (mp archiveMultiplexer) worker(id uint) {
+func (mp archiveMultiplexer) worker() {
 	errs := make([]error, 0)
 	defer func() {
 		mp.errChan <- errs
 	}()
 
 	for pi := range mp.workChan {
-		fmt.Println("worker", id, "got", pi.Snippet.Title)
-		time.Sleep(time.Second)
+		outPath := filepath.Join(mp.cfg.Root, pi.Snippet.ChannelId, pi.ContentDetails.VideoId)
+		err := youtubeDownload(mp.cfg, pi.ContentDetails.VideoId, outPath)
+		if err != nil {
+			errs = append(errs, err)
+		}
 
 		select {
 		case <-mp.ctx.Done():
@@ -146,7 +150,7 @@ func newArchiveMultiplexer(ctx context.Context, cfg Config) archiveMultiplexer {
 	}
 
 	for i := uint(0); i < cfg.MaxParallel; i++ {
-		go a.worker(i)
+		go a.worker()
 	}
 
 	return a
@@ -178,6 +182,16 @@ func checkDownloader(exe string) error {
 	return nil
 }
 
+func checkDownloadDirectory(dir string) error {
+	testpath := dir + string(os.PathSeparator) + ".ytarchiver"
+	f, err := os.Create(testpath)
+	if err != nil {
+		return err
+	}
+
+	return f.Close()
+}
+
 // NewArchiver returns an initialised archiver struct which is ready to perform archiving.
 // This will fail if the passed API key is invalid or if there is no internet connection.
 func NewArchiver(cfg Config) (*Archiver, error) {
@@ -205,6 +219,10 @@ func NewArchiverWithContext(ctx context.Context, cfg Config) (*Archiver, error) 
 
 	if err = checkDownloader(cfg.Downloader); err != nil {
 		return nil, fmt.Errorf("%w %s: %v", ErrDownloader, cfg.Downloader, err)
+	}
+
+	if err = checkDownloadDirectory(cfg.Root); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrDownloadDir, err)
 	}
 
 	if err = ar.buildChancache(); err != nil {
@@ -280,6 +298,7 @@ func (a *Archiver) Archive() error {
 		mp.Done()
 		errs := mp.Wait()
 		for _, ve := range errs {
+			cerr.Add(ve)
 			if errors.Is(ve, ErrVideo) {
 				// Video download errored - try again next time maybe?
 				delete(a.chancache[ch].Videos, ve.(videoError).VideoID)

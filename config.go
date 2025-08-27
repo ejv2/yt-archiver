@@ -31,6 +31,12 @@ type Config struct {
 	// Selectors are critera which must be met in order for a
 	// video to be archived.
 	Selectors []VideoSelector
+	// Output video information to a "{ID}.info.json" file in the
+	// same directory as the video files.
+	DumpVideoInfo bool
+	// Output channel information to a "channel.json" file in the
+	// same directory as the video files.
+	DumpChannelInfo bool
 }
 
 // DefaultConfig returns the default configuration with the given API key specified.

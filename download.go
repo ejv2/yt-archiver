@@ -22,10 +22,13 @@ func youtubeDownload(cfg Config, videoID string, outPath string) error {
 		Args: []string{
 			cfg.Downloader,
 			"-o", outPath,
-			"--write-info-json",
-			uri,
 		},
 	}
+
+	if cfg.DumpVideoInfo {
+		proc.Args = append(proc.Args, "--write-info-json")
+	}
+	proc.Args = append(proc.Args, uri)
 
 	err := proc.Run()
 	if err != nil {

@@ -6,5 +6,7 @@
 	"channels": [
 		{"handle": "RickAstleyYT"}
 	],
-	"interval": "1h"
+	"interval": "1h",
+	"dump_video_info": true,
+	"dump_channel_info": true
 }

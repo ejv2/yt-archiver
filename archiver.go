@@ -7,6 +7,7 @@ package ytarchiver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -257,6 +258,24 @@ func (a *Archiver) buildChancache() error {
 	return nil
 }
 
+func (a *Archiver) dumpChanInfo(c *cachedChannel) error {
+	if !a.DumpChannelInfo {
+		return nil
+	}
+
+	path := filepath.Join(a.Root, c.ID, "channel.json")
+	dat, err := json.Marshal(*c)
+	if err != nil {
+		return fmt.Errorf("dump chan info: %w", err)
+	}
+	err = os.WriteFile(path, dat, 0644)
+	if err != nil {
+		return fmt.Errorf("dump chan info: %w", err)
+	}
+
+	return nil
+}
+
 func (a *Archiver) Archive() error {
 	var err ArchiveError
 
@@ -312,6 +331,8 @@ func (a *Archiver) Archive() error {
 				delete(a.chancache[ch].Videos, ve.(videoError).VideoID)
 			}
 		}
+
+		a.dumpChanInfo(chc)
 
 		if !cerr.Nil() {
 			err = append(err, cerr)

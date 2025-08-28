@@ -163,7 +163,9 @@ type Archiver struct {
 	ctx    context.Context
 	client *youtube.Service
 
-	chancache map[YouTubeChannel]*cachedChannel
+	// chancache is a map between the YoutubeChannel.Ident() of a channel
+	// and its cached channel object.
+	chancache map[string]*cachedChannel
 }
 
 func checkDownloader(exe string) error {
@@ -213,7 +215,7 @@ func NewArchiverWithContext(ctx context.Context, cfg Config) (*Archiver, error) 
 		cfg,
 		ctx,
 		nil,
-		make(map[YouTubeChannel]*cachedChannel),
+		make(map[string]*cachedChannel),
 	}
 
 	cl, err := youtube.NewService(ar.ctx, option.WithAPIKey(cfg.APIKey))
@@ -252,7 +254,7 @@ func (a *Archiver) buildChancache() error {
 			return fmt.Errorf("%w: %v", ErrCacheBuild, err)
 		}
 
-		a.chancache[c] = &cchan
+		a.chancache[c.Identity()] = &cchan
 	}
 
 	return nil
@@ -286,7 +288,7 @@ func (a *Archiver) Archive() error {
 		defer cancel()
 		mp := newArchiveMultiplexer(runCtx, a.Config)
 
-		chc, ok := a.chancache[ch]
+		chc, ok := a.chancache[ch.Identity()]
 		if !ok {
 			cerr.Add(ErrCacheMiss)
 			err = append(err, cerr)
@@ -328,7 +330,7 @@ func (a *Archiver) Archive() error {
 			cerr.Add(ve)
 			if errors.Is(ve, ErrVideo) {
 				// Video download errored - try again next time maybe?
-				delete(a.chancache[ch].Videos, ve.(videoError).VideoID)
+				delete(a.chancache[ch.Identity()].Videos, ve.(videoError).VideoID)
 			}
 		}
 

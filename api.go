@@ -33,10 +33,9 @@ func isHTTPError(status int) bool {
 // be applied in addition to the global video selectors configured in
 // the root.
 type YouTubeChannel struct {
-	ID       string
-	Handle   string
-	Username string
-
+	ID        string
+	Handle    string
+	Username  string
 	Selectors []VideoSelector
 }
 

@@ -46,7 +46,7 @@ func youtubeDownload(cfg Config, videoID string, outPath string) error {
 // dir and marks already downloaded videos as present in the videos map.
 func crawlRoot(a *Archiver) error {
 	for _, ch := range a.Channels {
-		cch := a.chancache[ch]
+		cch := a.chancache[ch.Identity()]
 
 		dir, err := os.ReadDir(cch.ID)
 		if err != nil {

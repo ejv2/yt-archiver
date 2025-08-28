@@ -42,16 +42,34 @@ type channelData struct {
 	Name string
 }
 
+type videoTimestamp time.Time
+
+func (v *videoTimestamp) UnmarshalJSON(src []byte) error {
+	buf := ""
+	err := json.Unmarshal(src, &buf)
+	if err != nil {
+		return err
+	}
+
+	t, err := time.Parse("20060102", buf)
+	if err != nil {
+		return err
+	}
+
+	*v = videoTimestamp(t)
+	return nil
+}
+
 type videoData struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	ThumbnailURL string `json:"thumbnail"`
-	Duration     string `json:"duration_string"`
-	ChannelID    string `json:"channel_id"`
-	Timestamp    uint   `json:"timestamp"`
-	WasLive      bool   `json:"was_live"`
-	Extension    string `json:"ext"`
+	ID           string         `json:"id"`
+	Title        string         `json:"title"`
+	Description  string         `json:"description"`
+	ThumbnailURL string         `json:"thumbnail"`
+	Duration     string         `json:"duration_string"`
+	ChannelID    string         `json:"channel_id"`
+	Timestamp    videoTimestamp `json:"upload_date"`
+	WasLive      bool           `json:"was_live"`
+	Extension    string         `json:"ext"`
 }
 
 type videoArray []videoData
@@ -62,7 +80,7 @@ func (v videoArray) Len() int {
 
 func (v videoArray) Less(i, j int) bool {
 	// NOTE: Sorting in reverse here so that most recent timestamp comes first.
-	return v[i].Timestamp > v[j].Timestamp
+	return time.Time(v[j].Timestamp).Before(time.Time(v[i].Timestamp))
 }
 
 func (v videoArray) Swap(i, j int) {

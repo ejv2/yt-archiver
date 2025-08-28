@@ -22,6 +22,7 @@ func youtubeDownload(cfg Config, videoID string, outPath string) error {
 		Args: []string{
 			cfg.Downloader,
 			"-o", outPath,
+			"--merge-output-format", "mp4",
 		},
 	}
 

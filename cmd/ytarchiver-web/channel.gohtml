@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{{template "head.gohtml" "Channel Listing"}}
+	</head>
+
+	<body>
+		{{template "nav.gohtml" .}}
+		<div class="container-fluid mt-3">
+			<h1 class="border-bottom border-primary">Archived YouTube Videos from {{(index .Chans .Cind).Name}}</h1>
+
+			<div class="container-fluid mt-3">
+				<div class="row">
+					{{$cid := .Cid}}
+					{{range index .Videos .Cid}}
+					<div class="col-sm-6 col-lg-4 col-xxl-3 mb-3 mt-3 mb-sm-0">
+						<div class="card">
+							<img src="{{.ThumbnailURL}}" class="card-img-top" alt="Thumnail for '{{.Title}}'">
+							<a class="card-body" href="/vid/{{$cid}}/{{.ID}}">
+								<h5 class="card-title">{{.Title}}</h5>
+								<p class="card-text"><strong>{{.Duration}}</strong></p>
+								<p class="card-text">{{limit .Description 125}}</p>
+							</a>
+						</div>
+					</div>
+					{{end}}
+				</div>
+			</div>
+
+			{{template "footer.gohtml"}}
+		</div>
+	</body>
+</html>

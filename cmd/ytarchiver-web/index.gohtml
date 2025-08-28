@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{{template "head.gohtml" "Home"}}
+	</head>
+
+	<body>
+		{{template "nav.gohtml" .}}
+		<div class="container-fluid mt-3">
+			<h1 class="border-bottom border-primary">Archived YouTube Videos</h1>
+
+			<div class="container-fluid mt-3">
+				<div class="row">
+					{{$vids := .Videos}}
+					{{range .Chans}}
+					<div class="col-sm-6 col-lg-4 col-xxl-3 mb-3 mt-3 mb-sm-0">
+						<div class="card">
+							<a class="card-body" href="/chan/{{.ID}}">
+								<h5 class="card-title">{{.Name}}</h5>
+								<p class="card-text">{{len (index $vids .ID)}} videos</p>
+							</a>
+						</div>
+					</div>
+					{{end}}
+				</div>
+			</div>
+
+			{{template "footer.gohtml"}}
+		</div>
+	</body>
+</html>

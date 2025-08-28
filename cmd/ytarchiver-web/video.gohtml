@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{{template "head.gohtml" "Video"}}
+		{{$vid := index (index .Videos .Cid) .Vind}}
+	</head>
+
+	<body>
+		{{template "nav.gohtml" .}}
+		<div class="container-fluid mt-4">
+			<video controls class="bg-dark" width="90%" src="/videos/{{.Cid}}/{{.Vid}}.{{$vid.Extension}}"></video>
+			<h1>{{$vid.Title}}</h1>
+			<h4 class="text-secondary">{{$vid.Duration}} -- {{(index .Chans .Cind).Name}}</h4>
+
+
+
+			<p class="d-inline-flex gap-1">
+				<a href="#descriptionCollapse" data-bs-toggle="collapse" role="button">
+					Show Description
+				</a>
+			</p>
+			<div class="collapse" id="descriptionCollapse">
+				{{$vid.Description}}
+			</div>
+
+			{{template "footer.gohtml"}}
+		</div>
+	</body>
+</html>

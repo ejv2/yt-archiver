@@ -48,7 +48,7 @@ func crawlRoot(a *Archiver) error {
 	for _, ch := range a.Channels {
 		cch := a.chancache[ch.Identity()]
 
-		dir, err := os.ReadDir(cch.ID)
+		dir, err := os.ReadDir(a.Root + string(os.PathSeparator) + cch.ID)
 		if err != nil {
 			// This is ok and expected as not all channels will yet have
 			// been started to be archived.
@@ -63,9 +63,12 @@ func crawlRoot(a *Archiver) error {
 			if f.IsDir() {
 				continue
 			}
+			if strings.HasSuffix(f.Name(), ".json") {
+				continue
+			}
 
 			name := f.Name()
-			estart := strings.LastIndexByte(name, '.')
+			estart := strings.IndexByte(name, '.')
 			if estart != -1 {
 				name = name[:estart]
 			}

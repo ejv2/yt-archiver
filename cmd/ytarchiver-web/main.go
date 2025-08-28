@@ -22,6 +22,21 @@ var (
 	Root       = flag.String("root", ".", "ytarchiver root directory to load files from")
 )
 
+type multiError []error
+
+func (m multiError) Error() string {
+	sb := &strings.Builder{}
+	for i, e := range m {
+		if i != 0 {
+			sb.WriteRune('\n')
+		}
+
+		fmt.Fprint(sb, e.Error())
+	}
+
+	return sb.String()
+}
+
 type channelData struct {
 	ID   string
 	Name string
@@ -63,6 +78,7 @@ type standardData struct {
 
 func loadStandardData() (standardData, error) {
 	dat := standardData{Videos: make(map[string]videoArray)}
+	errs := make(multiError, 0, 4)
 
 	chandirs, err := os.ReadDir(*Root)
 	if err != nil {
@@ -77,13 +93,15 @@ func loadStandardData() (standardData, error) {
 		path := filepath.Join(*Root, c.Name(), "channel.json")
 		fdat, err := os.ReadFile(path)
 		if err != nil {
-			return dat, fmt.Errorf("standard data: reading channel data: %w", err)
+			errs = append(errs, fmt.Errorf("standard data: reading channel data: %w", err))
+			continue
 		}
 
 		var chanobj channelData
 		err = json.Unmarshal(fdat, &chanobj)
 		if err != nil {
-			return dat, fmt.Errorf("standard data: parsing channel data: %w", err)
+			errs = append(errs, fmt.Errorf("standard data: parsing channel data: %w", err))
+			continue
 		}
 
 		dat.Chans = append(dat.Chans, chanobj)
@@ -91,7 +109,8 @@ func loadStandardData() (standardData, error) {
 		chanpath := filepath.Join(*Root, c.Name())
 		vidfiles, err := os.ReadDir(chanpath)
 		if err != nil {
-			return dat, fmt.Errorf("standard data: reading channel videos: %w", err)
+			errs = append(errs, fmt.Errorf("standard data: reading channel videos: %w", err))
+			continue
 		}
 
 		for _, v := range vidfiles {
@@ -99,13 +118,15 @@ func loadStandardData() (standardData, error) {
 				path := filepath.Join(*Root, c.Name(), v.Name())
 				fdat, err := os.ReadFile(path)
 				if err != nil {
-					return dat, fmt.Errorf("standard data: reading video data: %w", err)
+					errs = append(errs, fmt.Errorf("standard data: reading video data: %w", err))
+					continue
 				}
 
 				var video videoData
 				err = json.Unmarshal(fdat, &video)
 				if err != nil {
-					return dat, fmt.Errorf("standard data: parsing video data: %w", err)
+					errs = append(errs, fmt.Errorf("standard data: parsing video data: %w", err))
+					continue
 				}
 
 				dat.Videos[chanobj.ID] = append(dat.Videos[chanobj.ID], video)
@@ -114,6 +135,10 @@ func loadStandardData() (standardData, error) {
 
 		// Sort in descending order of unix timestamp (i.e most recent first)
 		sort.Sort(dat.Videos[chanobj.ID])
+	}
+
+	if len(errs) != 0 {
+		return dat, errs
 	}
 
 	return dat, nil

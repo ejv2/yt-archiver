@@ -296,6 +296,8 @@ func (a *Archiver) Archive() error {
 		}
 		fmt.Printf("[%s] %v\n", chc.ID, chc)
 
+		a.dumpChanInfo(chc)
+
 		e = chc.Foreach(a.ctx, a.client, func(cc *cachedChannel, pi *youtube.PlaylistItem) error {
 			// Setup map if it isn't already - prevents full video enumeration happening again
 			if cc.Videos == nil {

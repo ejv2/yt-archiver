@@ -1,9 +1,11 @@
 package ytarchiver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
+	"time"
 
 	"google.golang.org/api/youtube/v3"
 )
@@ -17,6 +19,10 @@ const (
 	SelectorRegexTitle = iota
 	SelectorRegexDescription
 )
+
+// playlistStaleTimeout is the time after which the contents of a playlist will be
+// invalidated and re-requested.
+const playlistStaleTimeout = 24 * time.Hour
 
 // A VideoSelector is a criterion for deciding if a given video should be downloaded.
 // All specified criteria must be matched before a given video will be archived.
@@ -56,4 +62,59 @@ func (s SelectorRegex) Should(vid *youtube.PlaylistItem, _ *youtube.Service) boo
 	}
 
 	return s.patt.MatchString(toMatch)
+}
+
+// PlaylistSelector will select only for videos which are a
+// member of a playlist identified via the given ID.
+//
+// The selector does some internal bookkeeping to ensure that
+// we only hit the API once to request the playlist.
+type PlaylistSelector struct {
+	PlaylistID string
+
+	listLoaded *time.Time
+	list       map[string]struct{}
+}
+
+func (p *PlaylistSelector) loadPlaylist(s *youtube.Service) error {
+	// empty/initialize the contents map
+	p.list = make(map[string]struct{})
+
+	rq := s.PlaylistItems.List([]string{"contentDetails"}).PlaylistId(p.PlaylistID).MaxResults(50)
+	rq.Pages(context.Background(), func(r *youtube.PlaylistItemListResponse) error {
+		for _, i := range r.Items {
+			if i == nil || i.ContentDetails == nil {
+				continue
+			}
+
+			p.list[i.ContentDetails.VideoId] = struct{}{}
+		}
+		return nil
+	})
+
+	_, err := rq.Do()
+	return err
+}
+
+// we need to load if:
+//   - the playlist hasn't been loaded yet
+//   - the cache map got deleted (somehow?)
+//   - the playlist is stale
+func (p *PlaylistSelector) needLoad() bool {
+	return p.listLoaded == nil || p.list == nil || time.Since(*p.listLoaded) > playlistStaleTimeout
+}
+
+func (p *PlaylistSelector) Should(vid *youtube.PlaylistItem, s *youtube.Service) bool {
+	// If we haven't retrieved the list yet, do it now
+	if p.needLoad() {
+		if p.loadPlaylist(s) != nil {
+			return false
+		}
+		now := time.Now()
+		p.listLoaded = &now
+	}
+
+	_, ok := p.list[vid.ContentDetails.VideoId]
+
+	return ok
 }

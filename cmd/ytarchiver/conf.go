@@ -31,6 +31,7 @@ type configSelector struct {
 		Type    string
 		Pattern string
 	}
+	Playlist string
 }
 
 func (c configSelector) Selector() (ytarchiver.VideoSelector, error) {
@@ -41,6 +42,8 @@ func (c configSelector) Selector() (ytarchiver.VideoSelector, error) {
 			return nil, ErrInvalidRegexType
 		}
 		return ytarchiver.NewSelectorRegex(t, c.Regex.Pattern)
+	case c.Playlist != "":
+		return &ytarchiver.PlaylistSelector{PlaylistID: c.Playlist}, nil
 	default:
 		// Ignore empty.
 		return nil, nil

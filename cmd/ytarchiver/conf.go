@@ -60,6 +60,7 @@ type Config struct {
 	APIKey          string `required:"true"`
 	MaxParallel     uint
 	Downloader      string
+	MaxRetries      uint
 	Selectors       []configSelector
 	DumpVideoInfo   bool
 	DumpChannelInfo bool
@@ -74,6 +75,7 @@ func (c Config) ArchiverConfig() (ytarchiver.Config, error) {
 		APIKey:          c.APIKey,
 		MaxParallel:     c.MaxParallel,
 		Downloader:      c.Downloader,
+		MaxRetries:      c.MaxRetries,
 		DumpVideoInfo:   c.DumpVideoInfo,
 		DumpChannelInfo: c.DumpChannelInfo,
 	}

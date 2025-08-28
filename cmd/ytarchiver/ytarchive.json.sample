@@ -3,6 +3,7 @@
 	"api_key": "YOUR_KEY_HERE",
 	"max_parallel": 4,
 	"downloader": "/usr/bin/youtube-dl",
+	"max_retries": 3,
 	"channels": [
 		{"handle": "RickAstleyYT"}
 	],

@@ -16,30 +16,43 @@ var ErrYoutubeDownloader = errors.New("ytarchiver: youtube downloader error")
 
 func youtubeDownload(cfg Config, videoID string, outPath string) error {
 	uri := youtubeWatchURL + videoID
+	var err error
 
-	proc := exec.Cmd{
-		Path: cfg.Downloader,
-		Args: []string{
-			cfg.Downloader,
-			"-o", outPath,
-			"--merge-output-format", "mp4",
-		},
+	max := cfg.MaxRetries
+	if max == 0 {
+		max = 1
 	}
 
-	if cfg.DumpVideoInfo {
-		proc.Args = append(proc.Args, "--write-info-json")
-	}
-	proc.Args = append(proc.Args, uri)
+	for i := uint(0); i < cfg.MaxRetries; i++ {
+		proc := exec.Cmd{
+			Path: cfg.Downloader,
+			Args: []string{
+				cfg.Downloader,
+				"-o", outPath,
+				"--merge-output-format", "mp4",
+			},
+		}
 
-	err := proc.Run()
-	if err != nil {
-		return fmt.Errorf("%w: %v", ErrYoutubeDownloader, err)
-	}
-	if !proc.ProcessState.Success() {
-		return fmt.Errorf("%w: pid %d exitted with code %d", ErrYoutubeDownloader, proc.ProcessState.Pid(), proc.ProcessState.ExitCode())
+		if cfg.DumpVideoInfo {
+			proc.Args = append(proc.Args, "--write-info-json")
+		}
+		proc.Args = append(proc.Args, uri)
+
+		err = proc.Run()
+		if err != nil {
+			err = fmt.Errorf("%w: %v", ErrYoutubeDownloader, err)
+			continue
+		}
+		if !proc.ProcessState.Success() {
+			err = fmt.Errorf("%w: pid %d exitted with code %d", ErrYoutubeDownloader, proc.ProcessState.Pid(), proc.ProcessState.ExitCode())
+			continue
+		}
+
+		// If we got to here, all succeeded and no more retries
+		return nil
 	}
 
-	return nil
+	return err
 }
 
 // crawlRoot looks at each file and directory in the root of the downloads

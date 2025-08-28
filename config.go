@@ -10,6 +10,7 @@ var defaultConfig = Config{
 	APIKey:      "",
 	MaxParallel: uint(runtime.GOMAXPROCS(0)),
 	Downloader:  "/usr/bin/youtube-dl",
+	MaxRetries:  3,
 }
 
 // Config contains the runtime configuration for the archiver system.
@@ -28,6 +29,9 @@ type Config struct {
 	// Path to a YouTube downloader executable.
 	// Must be youtube-dl or a fork thereof.
 	Downloader string
+	// The daemon will retry a download a maximum of
+	// this many times before giving up and reporting an error.
+	MaxRetries uint
 	// Selectors are critera which must be met in order for a
 	// video to be archived.
 	Selectors []VideoSelector

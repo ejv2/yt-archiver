@@ -31,6 +31,8 @@ type Config struct {
 	Downloader string
 	// The daemon will retry a download a maximum of
 	// this many times before giving up and reporting an error.
+	// If MaxRetries is zero, retries indefinetely. This can be
+	// dangerous, so set with care.
 	MaxRetries uint
 	// Selectors are critera which must be met in order for a
 	// video to be archived.

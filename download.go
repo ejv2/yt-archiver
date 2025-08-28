@@ -18,12 +18,7 @@ func youtubeDownload(cfg Config, videoID string, outPath string) error {
 	uri := youtubeWatchURL + videoID
 	var err error
 
-	max := cfg.MaxRetries
-	if max == 0 {
-		max = 1
-	}
-
-	for i := uint(0); i < cfg.MaxRetries; i++ {
+	for i := uint(0); cfg.MaxRetries == 0 || i < cfg.MaxRetries; i++ {
 		proc := exec.Cmd{
 			Path: cfg.Downloader,
 			Args: []string{

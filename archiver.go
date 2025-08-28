@@ -304,7 +304,7 @@ func (a *Archiver) Archive() error {
 				return nil
 			}
 			// If any selectors object, skip this video
-			for _, m := range a.Selectors {
+			for _, m := range append(a.Selectors, ch.Selectors...) {
 				if !m.Should(pi, a.client) {
 					return nil
 				}

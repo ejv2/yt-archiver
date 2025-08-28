@@ -28,10 +28,16 @@ func isHTTPError(status int) bool {
 //  3. YouTube username
 //
 // The highest specifier set will be used and the rest ignored.
+//
+// YouTubeChannel also contains a slice of VideoSelectors which will
+// be applied in addition to the global video selectors configured in
+// the root.
 type YouTubeChannel struct {
 	ID       string
 	Handle   string
 	Username string
+
+	Selectors []VideoSelector
 }
 
 func (c YouTubeChannel) String() string {

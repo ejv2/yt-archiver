@@ -28,7 +28,12 @@ func initialize() (Config, *ytarchiver.Archiver, error) {
 		return Config{}, nil, fmt.Errorf("invalid config: %w", err)
 	}
 
-	ar, err := ytarchiver.NewArchiver(cfg.Config)
+	conf, err := cfg.ArchiverConfig()
+	if err != nil {
+		return Config{}, nil, fmt.Errorf("ytarchiver: loading config: %w", err)
+	}
+
+	ar, err := ytarchiver.NewArchiver(conf)
 	if err != nil {
 		return Config{}, nil, err
 	}

@@ -1,0 +1,14 @@
+[Unit]
+Description=A simple YouTube archiver daemon - web interface
+Wants=network.target
+After=network.target
+
+[Service]
+WorkingDirectory=/var/lib/ytarchiver/
+Environment=GIN_MODE=release
+ExecStart=/var/lib/ytarchiver/ytarchiver-web -listen :80 -root /mnt/archive/youtube-archive/
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+yt-archiver - systemd support
+=============================
+
+Included are a couple of init scripts for the systemd init system which start
+the archiver daemon and accompanied web interface. They assume that they are
+placed in the following locations:
+
+	ytarchiver => /usr/bin/
+	ytarchiver-web => /var/lib/ytarchiver/	
+		(along with all the gohtml files in cmd/ytarchiver-web/)
+	ytarchiver.json => /etc/
+
+Place these files in the expected location and everything should work out of the
+box.

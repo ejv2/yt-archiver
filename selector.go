@@ -118,3 +118,27 @@ func (p *PlaylistSelector) Should(vid *youtube.PlaylistItem, s *youtube.Service)
 
 	return ok
 }
+
+// IDSelector only selects videos with a set of specified IDs.
+type IDSelector struct {
+	IDs      []string
+	matchmap map[string]struct{}
+}
+
+func NewIDSelector(ids []string) IDSelector {
+	sel := IDSelector{ids, make(map[string]struct{})}
+	for _, id := range ids {
+		sel.matchmap[id] = struct{}{}
+	}
+
+	return sel
+}
+
+func (i IDSelector) Should(vid *youtube.PlaylistItem, s *youtube.Service) bool {
+	if vid == nil || vid.ContentDetails == nil {
+		return false
+	}
+
+	_, ok := i.matchmap[vid.ContentDetails.VideoId]
+	return ok
+}

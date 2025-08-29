@@ -117,17 +117,56 @@ func (c cachedChannel) String() string {
 	return c.Name
 }
 
-func (c *cachedChannel) foreach(resp *youtube.PlaylistItemListResponse, cmd func(*cachedChannel, *youtube.PlaylistItem) error) error {
+// checkUpcoming returns a map containing any videos in the given set which are upcoming and - as a
+// result - should not be considered for archiving.
+// To conserve quota, the set contained within resp should be as large as permitted by the API (probably
+// 50 max).
+func (c *cachedChannel) checkUpcoming(resp *youtube.PlaylistItemListResponse, srv *youtube.Service) (map[string]struct{}, error) {
+	ids := make([]string, 0, len(resp.Items))
+	for _, it := range resp.Items {
+		ids = append(ids, it.ContentDetails.VideoId)
+	}
+
+	r, err := srv.Videos.List([]string{"snippet"}).Id(ids...).Do()
+	if err != nil {
+		return nil, fmt.Errorf("check upcoming: %v", err)
+	}
+
+	upcoming := make(map[string]struct{})
+	for _, v := range r.Items {
+		if v == nil {
+			continue
+		}
+
+		if v.Snippet.LiveBroadcastContent != "none" && v.Snippet.LiveBroadcastContent != "completed" {
+			upcoming[v.Id] = struct{}{}
+		}
+	}
+
+	return upcoming, nil
+}
+
+func (c *cachedChannel) foreach(resp *youtube.PlaylistItemListResponse, srv *youtube.Service, cmd func(*cachedChannel, *youtube.PlaylistItem) error) error {
 	if isHTTPError(resp.HTTPStatusCode) {
 		return fmt.Errorf("foreach video on %s: http status %d", c.ID, resp.HTTPStatusCode)
 	}
 	if resp == nil || len(resp.Items) == 0 {
-		fmt.Println(resp.Items)
 		return ErrEmptyResults
+	}
+
+	upcoming, err := c.checkUpcoming(resp, srv)
+	if err != nil {
+		return err
 	}
 
 	for _, v := range resp.Items {
 		if v == nil {
+			continue
+		}
+		// Video flagged as upcoming; skip it for now
+		// NOTE: As we aren't running the callback here, we also aren't
+		// marking this as present in the map so this check is re-done.
+		if _, ok := upcoming[v.ContentDetails.VideoId]; ok {
 			continue
 		}
 
@@ -150,7 +189,7 @@ func (c *cachedChannel) Foreach(ctx context.Context, srv *youtube.Service, cmd f
 		n := 0
 		err := rq.Pages(ctx, func(pilr *youtube.PlaylistItemListResponse) error {
 			n++
-			return c.foreach(pilr, cmd)
+			return c.foreach(pilr, srv, cmd)
 		})
 
 		if err != nil {
@@ -162,7 +201,7 @@ func (c *cachedChannel) Foreach(ctx context.Context, srv *youtube.Service, cmd f
 			return fmt.Errorf("foreach video on %s: request: %v", c.ID, err)
 		}
 
-		err = c.foreach(r, cmd)
+		err = c.foreach(r, srv, cmd)
 		if err != nil {
 			return fmt.Errorf("foreach video on %s: %v", c.ID, err)
 		}
